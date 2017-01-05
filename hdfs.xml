@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License. See accompanying LICENSE file.
+-->
+
+<!-- Put site-specific property overrides in this file. -->
+
+<configuration>
+	<property>
+		<name>dfs.namenode.name.dir</name>
+		<value>file:/home/nebula/hadoop-2.7.1/hdfs/name</value>
+	</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>file:/home/nebula/hadoop-2.7.1/hdfs/data</value>
+	</property>
+	<property>
+		<name>dfs.replication</name>
+		<value>2</value>
+	</property>
+
+	<!-- property>
+		<name>dfs.namenode.secondary.http-address</name>
+		<value>master:9001</value>
+	</property>-->
+	<property>
+		<name>dfs.webhdfs.enabled</name>
+		<value>true</value>
+	</property> 
+	
+	<!-- 配置nameservices-->
+	<property>
+	  <name>dfs.nameservices</name>
+	  <value>master</value>
+	</property>
+	<!--# 这里的最后一个名字就是上面的nameService   value是两台NameNode的节点-->
+	<property>
+	  <name>dfs.ha.namenodes.master</name>
+	  <value>host22,host23</value>
+	</property>
+	<!--# 两个namenode的rpc地址-->
+	<property>
+	  <name>dfs.namenode.rpc-address.master.host22</name>
+	  <value>host22:8020</value>
+	</property>
+	<property>
+	  <name>dfs.namenode.rpc-address.master.host23</name>
+	  <value>host23:8020</value>
+	</property>
+	<property>
+      <name>dfs.namenode.servicerpc-address.master.host22</name>
+      <value>host22:53310</value>
+   </property>
+    <property>
+      <name>dfs.namenode.servicerpc-address.master.host23</name>
+      <value>host23:53310</value>
+   </property>
+	<!--# 两个namenode的http地址-->
+	<property>
+	  <name>dfs.namenode.http-address.master.host22</name>
+	  <value>host22:50070</value>
+	</property>
+	<property>
+	  <name>dfs.namenode.http-address.master.host23</name>
+	  <value>host23:50070</value>
+	</property>
+	<!--# 3台JournalNode地址，后台跟名字，但后面的名字不能与nameService相同-->
+	<property>
+	  <name>dfs.namenode.shared.edits.dir</name>
+	  <value>qjournal://host22:8485;host23:8485;host24:8485/master5200</value>
+	</property>
+	<!--# 配置客户端调用接口-->
+	<property>
+	  <name>dfs.client.failover.proxy.provider.master</name>
+	  <value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider</value>
+	</property>
+	<property>
+		<name>dfs.ha.fencing.methods</name>
+		<value>shell(/bin/true)</value>
+	</property>
+	<property>
+	  <name>dfs.ha.fencing.ssh.private-key-files</name>
+	  <value>/home/nebula/.ssh/id_rsa</value>
+	</property>
+	<property>
+	  <name>dfs.ha.fencing.ssh.connect-timeout</name>
+	  <value>5000</value>
+	</property>
+	<!--#配置journalnode目录-->
+	<property>
+	  <name>dfs.journalnode.edits.dir</name>
+	  <value>/home/nebula/hadoop-2.7.1/journal</value>
+	</property>
+	<property>
+	   <name>dfs.ha.automatic-failover.enabled</name>
+	   <value>true</value>
+	</property>
+	<property>
+      <name>ha.failover-controller.cli-check.rpc-timeout.ms</name>
+      <value>60000</value>
+   </property>
+   <property>
+      <name>ipc.client.connect.timeout</name>
+      <value>60000</value>
+   </property>
+</configuration>
