@@ -1,0 +1,70 @@
+大数据
+
+在搭好HA集群之后，想测试一下集群的高可用性，于是先把active的namenode给停掉：
+hadoop-daemon.sh stop namenode
+或者直接kill掉该节点namenode的对应进程也可。
+ 
+但是通过hdfs haadmin -getServiceState master1 查看，发现standby的namenode并没有自动切换成active，直到我把之前kill掉的namenode手动启动才会切换，但是这样就达不到高可用的目的啊。
+在网上找了好久才发现原因，原来是在hdfs-site.xml通过参数dfs.ha.fencing.methods来实现，出现故障时通过哪种方式登录到另一个namenode上进行接管工作。如果采用默认的值sshfence的话，设置集群就无法自动切换(下面单独解释)。log信息的是无法连接到standby的namenode。
+        <property>
+          <name>dfs.ha.fencing.methods</name>
+          <value>shell(/bin/true)</value>
+        </property>
+修改成上面的值后，问题解决，active的namenode被停掉后秒切到standby的namenode.
+扩展阅读：dfs.ha.fencing.methods参数
+系统在任何时候只有一个namenode节点处于active状态。在主备切换的时候，standby namenode会变成active状态，原来的active namenode就不能再处于active状态了，否则两个namenode同时处于active状态会有问题。所以在failover的时候要设置防止2个namenode都处于active状态的方法，可以是java类或者脚本。
+fencing的方法目前有两种，sshfence和shell
+sshfence方法是指通过ssh登陆到active namenode节点杀掉namenode进程，所以你需要设置ssh无密码登陆，还要保证有杀掉namenode进程的权限。
+shell方法是指运行一个shell脚本/命令来防止两个namenode同时处于active，脚本需要自己写。
+ 
+注意，QJM方式本身就有fencing功能，能保证只有一个namenode能往journalnode上写edits文件，所以是不需要设置fencing的方法就能的。但是，在发生failover的时候，原来的active namenode可能还在接受客户端的读请求，这样客户端很可能读到一些过时的数据（因为新的active namenode的数据已经实时更新了）。因此，还是建议设置fencing方法。如果确实不想设置fencing方法，可以设置一个能返回成功（没有fencing作用）的方法，如“shell(/bin/true)”。这个纯粹为了fencing方法能够成功返回，并不需要真的有fencing作用。这样可以提高系统的可用性，即使在fencing机制失败的时候还能保持系统的可用性。
+journelnode不同步，会导致一个namenode启动问题需要同步命令
+./bin/hadoop namenode  -initliazeSharedEdits
+1.Datanode上的VERSION中clusterID要和namenode中VERSIONDE上clusterID一致
+2.journalnode中name放着两个namenode中name中的数据
+3.zkfc必须跑起来
+4.部署时必须要格式化namenode节点
+（1） ./bin/hdfs namenode -format
+（2）./bin/hdfs zkfc -formatFZ
+（3）在主namenode节点用./bin/hadoop namenode -format格式化namenode和journalnode目录
+./bin/hadoop namenode -format master
+
+
+
+zookeeper日志查看：
+java -cp .:lib/slf4j-api-1.6.1.jar:lib/slf4j-log4j12-1.6.1.jar:lib/log4j-1.2.16.jar:zookeeper-3.4.6.jar    
+ org.apache.zookeeper.server.LogFormatter  logs/version-2/log.300000001 >> logs/version-2/3.log
+
+
+nohup命令：不挂断的运行一个进程
+
+
+linux命令小结
+
+df：
+  查看文件系统的磁盘占用情况，如：
+  df 
+  -T 显示磁盘的文件系统类型
+  -i  显示各文件系统的节点的使用情况   
+
+dd:
+ 用指定大小的块拷贝一个文件，并在拷贝的同时进行指定的转换
+  dd if=/dev/zero of=./11.txt bs=1K count=1
+
+du：
+   显示每个文件和目录的磁盘使用空间
+
+stat：
+     查看文件或者的文件系统的inode详细信息（所谓inode即文件系统的 index node）
+
+mke2fs：
+    制作一个文件系统
+    
+dump2efs：
+    显示一个设备块的详细信息，如：
+    dump2efs /dev/sda1
+
+fdisk:
+  给硬盘分区：
+
+   fdisk /dev/sda 
